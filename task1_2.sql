@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[System_info_tables_n]
+CREATE PROCEDURE [hr].[System_info_tables_nn]
 (
   @p_DatabaseName AS NVARCHAR(MAX)
 , @p_SchemaName AS NVARCHAR(MAX) 
