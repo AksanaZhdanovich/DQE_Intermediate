@@ -26,7 +26,7 @@ WITH query_list AS
 		(
 			SELECT
 				CASE 
-					WHEN ([next_name] IS NOT NULL and [Data_type] not in ('xml', 'bit', 'uniqueidentifier', 'hierarchyid') )
+					WHEN ([next_name] IS NOT NULL and [Data_type] not in ('xml', 'bit', 'uniqueidentifier', 'hierarchyid', 'geography','varbinary') )
 						THEN ' SELECT   
 								''' + @p_DatabaseName + ''' as [Database Name] 
 							   ,''' + @p_SchemaName + ''' as [Schema name]
@@ -49,7 +49,7 @@ WITH query_list AS
 							   , CAST(MIN(CASE WHEN CAST('''+ [Data_type] + ''' AS binary) = CAST(''date'' AS binary) THEN CONVERT(VARCHAR(8), ' + [Column_Name] + ' , 112) ELSE ' + [Column_Name] + '  END) AS VARCHAR) as [MIN value]
 							   , CAST(MAX(CASE WHEN CAST('''+ [Data_type] + ''' AS binary) = CAST(''date'' AS binary) THEN CONVERT(VARCHAR(8), ' +[Column_Name] + ' , 112) ELSE ' + [Column_Name] + '  END) AS VARCHAR) as [MAX value]
 							  FROM [' + @p_DatabaseName + '].[' + @p_SchemaName + '].[' + [Table_Name] + '] UNION ALL '
-						WHEN ([next_name] IS NOT NULL and [Data_type] in ('xml', 'bit', 'uniqueidentifier', 'hierarchyid') )
+						WHEN ([next_name] IS NOT NULL and [Data_type] in ('xml', 'bit', 'uniqueidentifier', 'hierarchyid', 'geography', 'varbinary') )
 						THEN ' SELECT   
 								''' + @p_DatabaseName + ''' as [Database Name] 
 							   ,''' + @p_SchemaName + ''' as [Schema name]
@@ -58,19 +58,17 @@ WITH query_list AS
 							   ,''' + [Column_Name] + ''' AS [Column Name] 
 							   ,''' + [Data_type] + ''' AS [Data Type] 
 							   , null AS [Count of DISTINCT values]
-							   , SUM(CASE WHEN ' + [Column_Name] + ' IS NULL THEN 1 ELSE 0 END ) AS [Count of NULL values]
-							   , SUM(CASE WHEN (CAST(''' + [Data_type] + ''' AS varchar(8)) LIKE '+'''int'''+' AND CAST(' + [Column_Name] + ' AS varchar(8)) = ''0'' )
-								    OR (CAST(''' + [Data_type] + ''' AS varchar(8)) LIKE '+'''%char'''+' AND LEN(CAST(' + [Column_Name] + ' AS varchar(8))) = 0)
-								             THEN 1 ELSE 0 END ) AS [Count of empty/zero values]
+							   , null AS [Count of NULL values]
+							   , null AS [Count of empty/zero values]
 							   , null AS [Only UPPERCASE strings]	
 							   , null  AS [Only LOWERCASE strings]	
 							   , null  AS [Rows with non-printable characters at the beginning/end]
 							   , null AS [Most_used_value]
-							   ,null  AS [% rows with most used value]
+							   , null  AS [% rows with most used value]
 							   , null as [MIN value]
 							   , null as [MAX value]
 							  FROM [' + @p_DatabaseName + '].[' + @p_SchemaName + '].[' + [Table_Name] + '] UNION ALL '
-					WHEN ([next_name] IS NULL and [Data_type] in ('xml', 'bit', 'uniqueidentifier', 'hierarchyid') )
+					WHEN ([next_name] IS NULL and [Data_type] in ('xml', 'bit', 'uniqueidentifier', 'hierarchyid', 'geography', 'varbinary') )
 						THEN 'SELECT   
 								''' + @p_DatabaseName + ''' as [Database Name] 
 							   ,''' + @p_SchemaName + ''' as [Schema name]
@@ -79,18 +77,16 @@ WITH query_list AS
 							   ,''' + [Column_Name] + ''' AS [Column Name] 
 							   ,''' + [Data_type] + ''' AS [Data Type] 
 							   , null AS [Count of DISTINCT values]
-							   , SUM(CASE WHEN ' + [Column_Name] + ' IS NULL THEN 1 ELSE 0 END ) AS [Count of NULL values]
-							   , SUM(CASE WHEN (CAST(''' + [Data_type] + ''' AS varchar(8)) LIKE '+'''int'''+' AND CAST(' + [Column_Name] + ' AS varchar(8)) = ''0'' )
-								    OR (CAST(''' + [Data_type] + ''' AS varchar(8)) LIKE '+'''%char'''+' AND LEN(CAST(' + [Column_Name] + ' AS varchar(8))) = 0)
-								             THEN 1 ELSE 0 END ) AS [Count of empty/zero values]
+							   , null AS [Count of NULL values]
+							   , null AS [Count of empty/zero values]
 							   , null AS [Only UPPERCASE strings]	
 							   , null  AS [Only LOWERCASE strings]	
 							   , null  AS [Rows with non-printable characters at the beginning/end]
 							   , null AS [Most_used_value]
-							   ,null  AS [% rows with most used value]
+							   , null  AS [% rows with most used value]
 							   , null as [MIN value]
 							   , null as [MAX value]
-							  FROM [' + @p_DatabaseName + '].[' + @p_SchemaName + '].[' + [Table_Name] + '] ;'
+							  FROM [' + @p_DatabaseName + '].[' + @p_SchemaName + '].[' + [Table_Name] + ']   Order by [Table Name];'
 						ELSE 'SELECT   
 								''' + @p_DatabaseName + ''' as [Database Name] 
 							   ,''' + @p_SchemaName + ''' as [Schema name]
@@ -112,13 +108,13 @@ WITH query_list AS
 									ORDER BY count(*) desc)*100/COUNT(*) as Varchar(8))   AS [% rows with most used value]
 							   , CAST(MIN(CASE WHEN CAST('''+ [Data_type] + ''' AS binary) = CAST(''date'' AS binary) THEN CONVERT(VARCHAR(8), ' + [Column_Name] + ' , 112) ELSE ' + [Column_Name] + '  END) AS VARCHAR) as [MIN value]
 							   , CAST(MAX(CASE WHEN CAST('''+ [Data_type] + ''' AS binary) = CAST(''date'' AS binary) THEN CONVERT(VARCHAR(8), ' +[Column_Name] + ' , 112) ELSE ' + [Column_Name] + '  END) AS VARCHAR) as [MAX value]
-							  FROM [' + @p_DatabaseName + '].[' + @p_SchemaName + '].[' + [Table_Name] + '] ;'
+							  FROM [' + @p_DatabaseName + '].[' + @p_SchemaName + '].[' + [Table_Name] + ']  Order by [Table Name];'
 				END [text_of_query]
 			FROM @tabless
 		)
 		
 	SELECT 
-	@v_Query = STRING_AGG([text_of_query], '') WITHIN GROUP (ORDER BY [text_of_query] ASC)
+	@v_Query = CONVERT(NVARCHAR(MAX), STRING_AGG([text_of_query], '') WITHIN GROUP (ORDER BY [text_of_query] ASC))
 	FROM query_list;
 	EXEC SP_EXECUTESQL @v_Query;
 	
